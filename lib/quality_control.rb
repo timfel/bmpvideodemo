@@ -1,4 +1,7 @@
+
 module QualityControl
+  include Cassowary
+
   FrameRate = 12
   FrameTime = 1.0 / FrameRate
   LoadAvg = File.open("/proc/loadavg", "r")
@@ -50,25 +53,19 @@ module QualityControl
     @quality = recalculate_quality
   end
 
+  require "libcassowary"
   def recalculate_quality
-    # Adjust quality based on encoding speed of last frame
-    if FrameTime > duration * 1.2
-      @quality = @quality * (FrameTime / duration)
-    elsif FrameTime < duration * 0.9
-      @quality = @quality * (FrameTime / duration)
+    var_quality = Variable.new(value: @quality)
+    solver = SimplexSolver.instance
 
-      if cpuload > 80
-        # The load is pretty high, go down a bit further
-        @quality -= @quality * 0.09
-      end
-    end
+    solver.add_constraint(var_quality <= 100)
+    solver.add_constraint(var_quality > 0)
+    solver.add_constraint(var_quality <= user_preference)
+    solver.add_constraint(var_quality / 100 <= 80 / cpuload)
+    solver.add_constraint(var_quality / 100 <= FrameTime / 0.9 / duration)
+    solver.add_constraint((var_quality / 100).>=(FrameTime / 1.2 / duration, Strength::MediumStrength))
 
-    # User preference is only upper bound
-    if @quality > user_preference
-      @quality = user_preference
-    end
-
-    # Round to nearest int
-    @quality = @quality.to_i
+    solver.solve
+    @quality = var_quality.value.to_i
   end
 end
