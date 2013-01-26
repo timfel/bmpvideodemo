@@ -12,6 +12,13 @@ module QualityControl
       @user_preference = 100
       @cpuload = 1
       @duration = FrameTime
+
+      constrain { @quality >= 0 }
+      constrain { @quality <= 100 }
+      constrain { @quality <= user_preference }
+      constrain { @quality / 100 >= FrameTime / 1.2 / duration }
+      constrain { @quality / 100 <= FrameTime / 0.9 / duration }
+      constrain { @quality / 100 <= 80 / cpuload }
     end
   end
 
