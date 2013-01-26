@@ -13,12 +13,13 @@ module QualityControl
       @cpuload = 1
       @duration = FrameTime
 
-      constrain { @quality >= 0 }
-      constrain { @quality <= 100 }
-      constrain { @quality <= user_preference }
-      constrain { @quality / 100 >= FrameTime / 1.2 / duration }
-      constrain { @quality / 100 <= FrameTime / 0.9 / duration }
-      constrain { @quality / 100 <= 80 / cpuload }
+      always { @quality >= 0 }
+      always { @quality <= 100 }
+      always { @quality <= user_preference }
+      always(:strong) { @quality == user_preference }
+      always { @quality / 100 <= 80 / cpuload }
+      always { @quality / 100 <= FrameTime / 1.2 / duration }
+      always(:weak) { @quality / 100 >= FrameTime / 0.9 / duration }
     end
   end
 
@@ -32,7 +33,7 @@ module QualityControl
 
   def read_user_preference
     input = UserPref.read
-    if input and input.size > 0 and input.to_i != @user_preference
+    if input and input.size > 0
       UserPref.truncate 0
       @user_preference = input.to_i
     end
