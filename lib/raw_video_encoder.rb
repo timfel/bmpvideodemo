@@ -22,8 +22,6 @@ class RawVideoEncoder
 
   def encode(quality)
     @quality = quality
-    @quality = 100 if @quality > 100
-    @quality = 1 if @quality < 1
 
     @frames.each do |frame|
       quality_control do

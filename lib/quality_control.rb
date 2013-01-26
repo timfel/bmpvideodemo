@@ -1,3 +1,5 @@
+require "libcassowary"
+
 module QualityControl
   FrameRate = 12
   FrameTime = 1.0 / FrameRate
@@ -6,21 +8,25 @@ module QualityControl
 
   def self.extended(base)
     base.instance_eval do
+      @quality = 100
       @user_preference = 100
-      @cpuload = 0
+      @cpuload = 1
       @duration = FrameTime
     end
   end
 
   def read_cpu_load
     LoadAvg.rewind
-    @cpuload = LoadAvg.read(4).gsub(".", "").to_i
+    load = LoadAvg.read(4).gsub(".", "").to_i
+    if load != @cpuload
+      @cpuload = load
+    end
   end
 
   def read_user_preference
     input = UserPref.read
-    if input and input.size > 0
-      UserPref.seek 0, File::SEEK_SET
+    if input and input.size > 0 and input.to_i != @user_preference
+      UserPref.truncate 0
       @user_preference = input.to_i
     end
   end
@@ -47,28 +53,5 @@ module QualityControl
     start = Time.now.to_f
     yield
     @duration = Time.now.to_f - start
-    @quality = recalculate_quality
-  end
-
-  def recalculate_quality
-    # Adjust quality based on encoding speed of last frame
-    if FrameTime > duration
-      @quality = @quality * (FrameTime * 2 / duration)
-    elsif FrameTime < duration * 0.9
-      @quality = @quality * (FrameTime / duration)
-
-      if cpuload > 80
-        # The load is pretty high, go down a bit further
-        @quality -= @quality * 0.09
-      end
-    end
-
-    # User preference is only upper bound
-    if @quality > user_preference
-      @quality = user_preference
-    end
-
-    # Round to nearest int
-    @quality = @quality.to_i
   end
 end
