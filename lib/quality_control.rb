@@ -15,8 +15,8 @@ module QualityControl
 
       always { @quality >= 0 }
       always { @quality <= 100 }
-      always { @quality <= user_preference }
-      always(:strong) { @quality == user_preference }
+      always(:strong) { @quality <= user_preference }
+      always(:medium) { @quality == user_preference }
       always { @quality / 100 <= 80 / cpuload }
       always { @quality / 100 <= FrameTime / 1.2 / duration }
       always(:weak) { @quality / 100 >= FrameTime / 0.9 / duration }
