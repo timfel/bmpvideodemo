@@ -25,17 +25,19 @@ module QualityControl
 
   def read_cpu_load
     LoadAvg.rewind
-    load = LoadAvg.read(4).gsub(".", "").to_i
-    if load != @cpuload
-      @cpuload = load
+    load = LoadAvg.read(4).gsub(".", "")
+    if load.to_i != @cpuload
+      @prev_load.disable if @prev_load
+      @prev_load = always { @cpuload == load.to_i }
     end
   end
 
   def read_user_preference
     input = UserPref.read
     if input and input.size > 0
-      UserPref.truncate 0
-      @user_preference = input.to_i
+      UserPref.seek 0, File::SEEK_SET
+      @prev_pref.disable if @prev_pref
+      @prev_pref = always { @user_preference == input.to_i }
     end
   end
 
@@ -60,6 +62,7 @@ module QualityControl
     read_system_stats
     start = Time.now.to_f
     yield
-    @duration = Time.now.to_f - start
+    @prev_duration.disable if @prev_duration
+    @prev_duration = always { @duration == Time.now.to_f - start.value }
   end
 end
