@@ -169,7 +169,6 @@ grey = Rectangle.new("grey", mercury.top, mercury.bottom)
 white = Rectangle.new("white", thermometer.top, mercury.top)
 temperature = mercury.height
 display = Display.new
-iterations = 100
 
 always { temperature == mercury.height }
 always { white.top == thermometer.top }
