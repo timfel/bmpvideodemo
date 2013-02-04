@@ -46,7 +46,8 @@ class Mouse
 end
 
 class Rectangle
-  def initialize(top, bottom)
+  def initialize(name, top, bottom)
+    @name = name
     @top = top
     @bottom = bottom
   end
@@ -68,7 +69,17 @@ class Rectangle
   end
 
   def inspect
-    "<Rectangle: #{@top}->#{@bottom}>"
+    "<#{@name} Rectangle: #{@top}->#{@bottom}>"
+  end
+end
+
+class Thermometer < Rectangle
+  def initialize(top, bottom)
+    super("thermometer", top, bottom)
+  end
+
+  def inspect
+    "<Thermometer: #{@top}->#{@bottom}>"
   end
 end
 
@@ -90,14 +101,30 @@ class Display
   end
 end
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 mouse = Mouse.new
 mercury = Mercury.new
-thermometer = Rectangle.new(200, 0)
-grey = Rectangle.new(mercury.top, mercury.bottom)
-white = Rectangle.new(thermometer.top, mercury.top)
+thermometer = Thermometer.new(200.0, 0.0)
+grey = Rectangle.new("grey", mercury.top, mercury.bottom)
+white = Rectangle.new("white", thermometer.top, mercury.top)
 temperature = mercury.height
 display = Display.new
-iterations = 1000
+iterations = 100
 
 
 start = Time.now
@@ -122,6 +149,28 @@ puts "Duration (#{iterations} iterations): #{Time.now - start}"
 puts [mouse, mercury, thermometer, grey, white, temperature, display].map { |e| e.inspect }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+mouse = Mouse.new
+mercury = Mercury.new
+thermometer = Thermometer.new(200, 0)
+grey = Rectangle.new("grey", mercury.top, mercury.bottom)
+white = Rectangle.new("white", thermometer.top, mercury.top)
+temperature = mercury.height
+display = Display.new
+iterations = 100
+
 always { temperature == mercury.height }
 always { white.top == thermometer.top }
 always { white.bottom == mercury.top }
@@ -134,10 +183,8 @@ always { mercury.bottom == thermometer.bottom }
 always { thermometer.bottom == 0 }
 always { thermometer.top == 200 }
 start = Time.now
-mouse_loc = always { mouse.location_y == 0 }
 (0...iterations).each do |i|
-  mouse_loc.disable
-  mouse_loc = always { mouse.location_y == i.value }
+  mouse.location_y = i
 end
 puts "Duration (#{iterations} iterations): #{Time.now - start}"
 puts [mouse, mercury, thermometer, grey, white, temperature, display].map { |e| e.inspect }
