@@ -124,7 +124,7 @@ grey = Rectangle.new("grey", mercury.top, mercury.bottom)
 white = Rectangle.new("white", thermometer.top, mercury.top)
 temperature = mercury.height
 display = Display.new
-iterations = 100
+iterations = 10000000
 
 
 start = Time.now
@@ -144,6 +144,7 @@ start = Time.now
     white.bottom = mercury.top
   end
   display.number = temperature
+  [mouse, mercury, thermometer, grey, white, temperature, display]
 end
 puts "Duration (#{iterations} iterations): #{Time.now - start}"
 puts [mouse, mercury, thermometer, grey, white, temperature, display].map { |e| e.inspect }
@@ -184,6 +185,7 @@ always { thermometer.top == 200 }
 start = Time.now
 (0...iterations).each do |i|
   mouse.location_y = i
+  [mouse, mercury, thermometer, grey, white, temperature, display]
 end
 puts "Duration (#{iterations} iterations): #{Time.now - start}"
 puts [mouse, mercury, thermometer, grey, white, temperature, display].map { |e| e.inspect }
