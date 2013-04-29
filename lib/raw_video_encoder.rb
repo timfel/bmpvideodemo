@@ -1,32 +1,29 @@
-require "quality_control"
+require "libcassowary"
+require "iosolver"
 
-class RawVideoEncoder
-  def initialize(path_or_io, frames, colors=:rgb)
-    unless [:rgb, :yuv].include? colors
-      raise "Only :yuv and :rgb are valid colors"
-    end
-    @colors = colors
+class RawRgbVideoEncoder
+  FrameMsMax = 1000 / 50
+  @@loadavg = File.open("/proc/loadavg", "r")
+  @@userpref = File.open(File.expand_path("../../quality.pref", __FILE__), "r+")
+
+  def initialize(io, frames, quality)
     @frames = frames
+    @io = io
+    @quality = quality
 
-    case path_or_io
-    when String
-      @io = File.open(path_or_io, "wb")
-    when IO
-      @io = path_or_io
-    else
-      raise "String or IO required"
-    end
-
-    extend QualityControl
+    always { @quality >= 0 }
+    always { @quality <= 100 }
+    always(:strong) { @quality <= user_preference }
+    always(:medium) { @quality == user_preference }
+    always { @quality <= 100 - cpuload * 125 + 100 } # 0.8 cpuload max => 0.8 * 125 = 100
+    # always { @quality <= 100 - FrameMsMax * 5 + 100 } # 1000/50 == FrameTime max => 20 * 5 = 100
   end
 
   def encode(quality)
     @quality = quality
 
     @frames.each do |frame|
-      quality_control do
-        encode_frame(frame)
-      end
+      encode_frame(frame)
     end
   end
 
@@ -42,11 +39,11 @@ class RawVideoEncoder
       pos = y * frame.width
 
       while x + skip < frame.width
-        line << pixel_triple_at(frame, pos, @colors) * skip
+        line << frame.rpixel_at(pos) * skip
         x += skip
         pos += skip
       end
-      line << pixel_triple_at(frame, pos, @colors) * (frame.width - x)
+      line << frame.rpixel_at(pos) * (frame.width - x)
       buf << line * skip
       y += skip
     end
@@ -55,31 +52,11 @@ class RawVideoEncoder
     @io << buf
   end
 
-  def pixel_triple_at(frame, pos, colors)
-    send("#{colors}_triple_at", frame, pos)
+  def cpuload
+    @@loadavg.read(4).gsub(".", "").to_i
   end
 
-  def yuv_triple_at(frame, pos)
-    r, g, b = frame.rgb_triple_at(pos, :reverse)
-    y = 0.299 * r + 0.587 * g + 0.114 * b
-    u = -0.1687 * r - 0.3313* g + 0.5 * b + 128
-    v = 0.5 * r - 0.4187 * g - 0.813 * b + 128
-    [y, u, v].pack("CCC")
-  end
-
-  def rgb_triple_at(frame, pos)
-    frame.rpixel_at(pos)
-  end
-end
-
-class YuvVideoEncoder < RawVideoEncoder
-  def initialize(path_or_io, frames)
-    super(path_or_io, frames, :yuv)
-  end
-end
-
-class RgbVideoEncoder < RawVideoEncoder
-  def initialize(path_or_io, frames)
-    super(path_or_io, frames, :rgb)
+  def user_preference
+    @@userpref.read.to_i
   end
 end

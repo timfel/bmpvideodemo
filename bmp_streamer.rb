@@ -17,8 +17,6 @@ end
 raise "No bitmaps found in #{input}" if bmps.size == 0
 
 IO.popen("mplayer -demuxer rawvideo -rawvideo w=640:h=480:format=rgb24:fps=12 -", "w") do |io|
-  coder = RgbVideoEncoder.new(io, bmps)
-  loop do
-    coder.encode(quality)
-  end
+  coder = RawRgbVideoEncoder.new(io, bmps, quality)
+  loop { coder.encode }
 end
