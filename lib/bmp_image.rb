@@ -11,7 +11,7 @@ class BMPImage
       @data = f.read
       @rdata = @data.reverse
     end
-    $stderr.puts "Loaded #{path} with #{@width}x#{@height} px*px"
+    # $stderr.puts "Loaded #{path} with #{@width}x#{@height} px*px"
   rescue Exception => e
     raise "Error (#{e}): #{path} does not appear to be a supported BMP file"
   end

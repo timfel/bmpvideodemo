@@ -1,11 +1,8 @@
 require "libcassowary"
 require "iosolver"
+require "method_timer"
 
 class RawRgbVideoEncoder
-  FrameMsMax = 1000 / 50
-  @@loadavg = File.open("/proc/loadavg", "r")
-  @@userpref = File.open(File.expand_path("../../quality.pref", __FILE__), "r+")
-
   def initialize(io, frames, quality)
     @frames = frames
     @io = io
@@ -15,13 +12,11 @@ class RawRgbVideoEncoder
     always { @quality <= 100 }
     always(:strong) { @quality <= user_preference }
     always(:medium) { @quality == user_preference }
-    always { @quality <= 100 - cpuload * 125 + 100 } # 0.8 cpuload max => 0.8 * 125 = 100
-    # always { @quality <= 100 - FrameMsMax * 5 + 100 } # 1000/50 == FrameTime max => 20 * 5 = 100
+    always { @quality <= cpuload } # 0.8 cpuload max => 0.8 * 125 = 100
+    always { @quality <= (encoding_time - 100 - FrameMsMax) * -1 } # 1000/50 == FrameTime max => 20 * 5 = 100
   end
 
-  def encode(quality)
-    @quality = quality
-
+  def encode
     @frames.each do |frame|
       encode_frame(frame)
     end
@@ -52,11 +47,20 @@ class RawRgbVideoEncoder
     @io << buf
   end
 
-  def cpuload
-    @@loadavg.read(4).gsub(".", "").to_i
+  FrameMsMax = 1000 / 50
+  @@userpref = FloatRwIO.new(File.expand_path("../../quality.pref", __FILE__), "r+")
+  @@loadavg = FloatRwIO.new("/proc/loadavg", "r")
+  @@timer = MethodTimer.new(self, :encode_frame)
+
+  def encoding_time
+    @@timer
   end
 
   def user_preference
-    @@userpref.read.to_i
+    @@userpref
+  end
+
+  def cpuload
+    @@loadavg
   end
 end
