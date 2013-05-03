@@ -17,6 +17,8 @@ class RawRgbVideoEncoder
   end
 
   def encode
+    user_preference.refresh
+    cpuload.refresh
     @frames.each do |frame|
       encode_frame(frame)
     end

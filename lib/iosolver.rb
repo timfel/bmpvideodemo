@@ -15,20 +15,25 @@ class FloatRwIO
   end
 
   def content=(float)
-    @file.truncate(0)
-    @file.write(float.to_s)
+    raise NotImplementedError("cannot assign")
+    # @file.truncate(0)
+    # @file.write(float.to_s)
   end
 
   def refresh
-    val = get_value
-    @constraint_variable.suggest_value(val)
-    if @constraint_variable.value != val
-      self.content = @constraint_variable.value
-    end
+    val = content
+    c = always { @constraint_variable == val }
+    c.disable
+    # @constraint_variable = val
+  end
+
+  def assign_constraint_value(float)
+    self.content = float
   end
 
   def for_constraint(name)
-    @constraint_variable = content.for_constraint(name)
+    @constraint_variable ||= content
+    __constrain__ { @constraint_variable }
   end
 end
 

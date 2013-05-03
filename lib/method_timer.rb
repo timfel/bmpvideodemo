@@ -1,7 +1,6 @@
 class MethodTimer
   def initialize(klass, symbol)
     @time = 0
-
     old_method = klass.instance_method(symbol)
     klass.define_method(symbol) do |*args, &block|
       start = Time.now.to_f
@@ -12,11 +11,11 @@ class MethodTimer
     end
   end
 
-  def last_time
-    @time
+  def assign_constraint_value(val)
+    raise NotImplementedError("cannot store into timer (attempted to store #{val})")
   end
 
-  def for_constraint(name)
-    @constraint_variable = last_time.for_constraint(name)
+  def constraint_interpretation(name)
+    __constrain__ { @time }
   end
 end
