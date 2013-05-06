@@ -11,12 +11,14 @@ unless input
   exit
 end
 
-bmps = Dir["#{File.expand_path(input)}/*.bmp"].sort.map do |file|
+bmps = Dir["#{File.expand_path(input)}/*.bmp"].sort[0..20].map do |file|
   BMPImage.new(file)
 end
 raise "No bitmaps found in #{input}" if bmps.size == 0
 
-IO.popen("mplayer -demuxer rawvideo -rawvideo w=640:h=480:format=rgb24:fps=12 -", "w") do |io|
+IO.popen("mplayer -demuxer rawvideo -rawvideo w=640:h=480:format=rgb24:fps=12 "\
+         "-input nodefault-bindings:conf=/dev/null - "\
+         "2>/dev/null >/dev/null", "w") do |io|
   coder = RawRgbVideoEncoder.new(io, bmps, quality)
   loop { coder.encode }
 end

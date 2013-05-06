@@ -1,38 +1,34 @@
 class FloatRwIO
-  def initialize(*args, &block)
-    @file = File.new(*args, &block)
-    @ticker = Fiber.new do
-      loop do
-        refresh
-        Fiber.yield
-      end
-    end
-  end
-
-  def content
+  def initialize(filename, mode="r", *args, &block)
+    @file = File.new(filename, mode, *args, &block)
+    @writable = mode =~ /[+w]/
+    @content = @file.read
     @file.rewind
-    @file.read.to_f
-  end
-
-  def content=(float)
-    raise NotImplementedError("cannot assign")
-    # @file.truncate(0)
-    # @file.write(float.to_s)
   end
 
   def refresh
-    val = content
-    c = always { @constraint_variable == val }
-    c.disable
-    # @constraint_variable = val
+    @file.rewind
+    @content = @file.read
   end
 
   def assign_constraint_value(float)
-    self.content = float
+    if float != @content.to_f
+      raise "cannot assign to read-only file" unless @writable
+      @file.truncate(0)
+      @file.rewind
+      @file.write(float)
+    end
   end
 
   def for_constraint(name)
-    @constraint_variable ||= content
+    unless @constraint_variable
+      @constraint_variable = 0
+      if @writable
+        always(:strong) { @constraint_variable == @content.to_f }
+      else
+        always { @constraint_variable == @content.to_f }
+      end
+    end
     __constrain__ { @constraint_variable }
   end
 end
