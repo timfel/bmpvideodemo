@@ -22,14 +22,14 @@ class RawRgbVideoEncoder
   end
 
   def encode
-    # XXX: this should happen in a thread
-    user_preference.refresh
-    cpuload.refresh
-    p "Encoding time: #{encoding_time.time}"
-    p "Pref: #{user_preference.content.strip}"
-    p "Load: #{cpuload.content.strip}"
-    p "Quality: #{@quality}"
+    # p "Encoding time: #{encoding_time.time}"
+    # p "Pref: #{user_preference.content.strip}"
+    # p "Load: #{cpuload.content.strip}"
+    # p "Quality: #{@quality}"
     @frames.each do |frame|
+      # XXX: this should happen in a thread
+      user_preference.refresh
+      cpuload.refresh
       encode_frame(frame)
     end
   end
