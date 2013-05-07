@@ -1,3 +1,5 @@
 #!/bin/bash
 
-mplayer -demuxer rawvideo -rawvideo w=640:h=480:format=rgb24:fps=$1 -fps $1 out.rgb -vo x11
+wd="$(dirname "$0")"
+export LD_LIBRARY_PATH=$wd/../rupypy/dependencies/z3/build
+xterm -e $wd/../rupypy/bin/topaz-z3 $wd/bmp_streamer.rb $wd/video 2>/dev/null >/dev/null & 
