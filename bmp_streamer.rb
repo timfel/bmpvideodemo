@@ -11,7 +11,7 @@ unless input
   exit
 end
 
-bmps = Dir["#{File.expand_path(input)}/*.bmp"].sort[0..20].map do |file|
+bmps = Dir["#{File.expand_path(input)}/*.bmp"].sort[0..-1].map do |file|
   BMPImage.new(file)
 end
 raise "No bitmaps found in #{input}" if bmps.size == 0

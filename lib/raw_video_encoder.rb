@@ -3,7 +3,7 @@ require "iosolver"
 require "method_timer"
 
 class RawRgbVideoEncoder
-  FrameMsMax = 1000 / 20
+  FrameMsMax = 1000 / 50
   @@userpref = FloatRwIO.new(File.expand_path("../../quality.pref", __FILE__), "r+")
   @@loadavg = FloatRwIO.new("/proc/loadavg", "r")
 
@@ -17,14 +17,18 @@ class RawRgbVideoEncoder
     always { @quality <= user_preference }
     always(:strong) { @quality == user_preference }
     always { @quality + cpuload * 100 <= 180 }
-    always { @quality + encoding_time >= 90 }
-    always(:strong) { @quality + encoding_time <= 100 + FrameMsMax }
+    always(:strong) { @quality + encoding_time >= 90 }
+    always { @quality + encoding_time <= 100 + FrameMsMax }
   end
 
   def encode
     # XXX: this should happen in a thread
     user_preference.refresh
     cpuload.refresh
+    p "Encoding time: #{encoding_time.time}"
+    p "Pref: #{user_preference.content.strip}"
+    p "Load: #{cpuload.content.strip}"
+    p "Quality: #{@quality}"
     @frames.each do |frame|
       encode_frame(frame)
     end

@@ -1,4 +1,5 @@
 class FloatRwIO
+  attr_reader :content
   def initialize(filename, mode="r", *args, &block)
     @file = File.new(filename, mode, *args, &block)
     @writable = mode =~ /[+w]/
