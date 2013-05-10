@@ -4,6 +4,7 @@ require "method_timer"
 
 class RawRgbVideoEncoder
   FrameMsMax = 1000 / 50
+  NumberOfProcessors = `nproc`.strip.to_i
   @@userpref = FloatRwIO.new(File.expand_path("../../quality.pref", __FILE__), "r+")
   @@loadavg = FloatRwIO.new("/proc/loadavg", "r")
 
@@ -16,7 +17,7 @@ class RawRgbVideoEncoder
     always { @quality <= 100 }
     always { @quality <= user_preference }
     always(:strong) { @quality == user_preference }
-    always { @quality + cpuload * 100 <= 180 }
+    always { @quality + cpuload * 100 <= 100 + 80 * NumberOfProcessors }
     always(:strong) { @quality + encoding_time >= 90 }
     always { @quality + encoding_time <= 100 + FrameMsMax }
   end
