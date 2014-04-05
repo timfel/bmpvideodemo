@@ -8,21 +8,21 @@ class RawRgbVideoEncoder
   @@userpref = FloatRwIO.new(File.expand_path("../../quality.pref", __FILE__), "r+")
   @@loadavg = FloatRwIO.new("/proc/loadavg", "r")
 
-  def initialize(io, frames, quality)
+  def initialize(pixels, frames, quality)
     @frames = frames
-    @io = io
+    @pixels = pixels
     @quality = quality
 
     always { @quality >= 0 }
     always { @quality <= 100 }
-    always { @quality <= user_preference }
-    always(:strong) { @quality == user_preference }
-    always { @quality + cpuload * 100 <= 100 + 80 * NumberOfProcessors }
-    always(:strong) { @quality + encoding_time >= 90 }
-    always { @quality + encoding_time <= 100 + FrameMsMax }
+    # always { @quality <= user_preference }
+    # always(:strong) { @quality == user_preference }
+    # always { @quality + cpuload * 100 <= 100 + 80 * NumberOfProcessors }
+    # always(:strong) { @quality + encoding_time >= 90 }
+    # always { @quality + encoding_time <= 100 + FrameMsMax }
   end
 
-  def encode
+  def encode(&callback)
     # p "Encoding time: #{encoding_time.time}"
     # p "Pref: #{user_preference.content.strip}"
     # p "Load: #{cpuload.content.strip}"
@@ -32,6 +32,7 @@ class RawRgbVideoEncoder
       user_preference.refresh
       cpuload.refresh
       encode_frame(frame)
+      callback[] if callback
     end
   end
 
@@ -57,7 +58,9 @@ class RawRgbVideoEncoder
     end
     buf << line * (frame.height - y)
 
-    @io << buf
+    buf.each_byte.each_with_index do |char, i|
+      @pixels.put_int8(i, char)
+    end
   end
   @@timer = MethodTimer.new(self, :encode_frame)
 
